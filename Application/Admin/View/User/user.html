@@ -1,0 +1,243 @@
+<include file="Public/head" />
+<form id="fmform" action="" method="POST" enctype="multipart/form-data">
+    <input type="hidden" value="fmimg" name="imgtype" value="" />
+    <input id="fmimg" style="display: none;" name="fmimg" type="file" onchange="upload('fmform','imgurl')"/>
+</form>
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;	}
+</style>
+<div>
+	<div style="margin:24px;">
+		<input style="height:36px;" type="text" size="24px" placeholder="输入推荐人手机号过滤查询" id="tphone" />
+		<!-- <input style="height:36px;" type="text" size="21px" placeholder="输入推荐人昵称过滤查询" id="tname" /> -->
+		<input style="height:36px;" type="text" size="21px" placeholder="输入会员昵称过滤查询" id="name" />
+		<label>&nbsp;注册日期 :</label>
+		<input style="height:36px;" type="date" size="24px" id="insta" />至
+		<input style="height:36px;" type="date" size="24px" id="inend" />
+		<button id="submit_search" class="btn btn-primary" onclick="searchState();">查询会员</button>
+		<div style="margin-left:10px;width:180px;float:left;">总会员数: <em style="color:red;font-size:16px;"> {$num}</em>&nbsp;人</div>
+		<div style="margin:24px;">
+			<!-- <a style="margin-left:240px;width:100px;" type="button" class="btn btn-primary" onclick="addUser()">添加会员</a> -->
+		</div>
+	</div>
+	<div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+			<table id="jqGrid" style="width: 100%;"></table>
+			<div id="jqGridPager"></div> 	
+	    </div>
+    	<div role="tabpanel" class="tab-pane" id="edituser"> 		
+	</div>
+<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" style="width:80%;margin:auto;">
+    	<div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 class="modal-title" id="myModalLabel">添加 | 编辑会员信息　<span>(带<span style="color:red">*</span>号为必填项)</span></h4>
+	      </div>
+	       <div class="modal-body">
+				<table class="modal-table" style="width:80%;">
+					<tr>
+						<td>手机号<span style="color:red">&nbsp;*</span></td>
+						<td>
+							<input type="hidden" name="userid" id="userid"/>
+							<input type="tel" class="form-control" id="tel" placeholder="请输入正确手机号"></td>
+					</tr>
+				</table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+	        <button type="button" class="btn btn-primary" onclick="saveUser();">保存</button>
+	      </div>		     
+    	</div>
+    </div>
+  </div>
+</div>
+<include file="Public/footer" />
+<script type="text/javascript">
+	// <a class='btn btn-danger' href='javascript:' onclick='deleteUser("+id+");'>删除</a>&nbsp;
+	function formatLink(id) {
+		return "<a class='btn btn-primary' onclick='edit("+id+");'>修改推荐人</a>&nbsp;<a class='btn btn-danger' href='javascript:' onclick='dong("+id+");'>冻结/解冻</a>&nbsp<a class='btn btn-warning' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+	};
+	function addUser() {
+  		$("#rname").val("");
+		$("#phone").val("");
+		$("#password").val("");  	
+		$("#nickname").val("");
+		$("#level").val("");
+		$("#thumbnail").val("");
+		$("#userid").val("");
+		$("#isNo").hide();
+		$('.bs-example-modal-lg').modal().show(); 
+	}
+    //编辑用户信息
+	function edit(id){
+		$.ajax({
+			url: "{:U('/Admin/User/getOneUser')}",
+			dataType: "json",
+			async: false,
+			data: { "id": id},
+			type: "GET",  
+			success: function(data) {
+	  			$("#tel").val(data.phone);
+	  			if(data.phone ==null){
+	  				alert('上级不存在！');
+	  			}
+	  			// $("#nickname").val(data.nickname);
+				$("#userid").val(data.id);
+			}
+			// error:function(data){
+			// 	alert(data.msg);
+			// }  
+		});
+		$("#isNo").show();
+		$('.bs-example-modal-lg').modal().show(); 
+	}
+	//冻结
+	function dong(id){
+		if (confirm("你确定要操作此用户吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/User/dongUser')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",  
+				success: function(user) {
+					if (user=="true") {
+						alert('操作成功!');
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/User/user')}");
+					}else{
+						alert('操作失败!');
+					}
+				}  
+			});
+		}
+	}
+	function deleteUser(id){
+		if (confirm("你确定要删除吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/User/deleteUser')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",   
+				success: function(req) {
+					if(req == "true"){	
+						alert('删除成功!');
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/User/user')}");
+					}else{
+						alert('用户删除失败!');
+					}
+				}
+		    });			
+		}
+	}
+	//保存添加或修改的用户信息
+	function saveUser(){
+		var userid   = $("#userid").val();
+		var rname    = $("#rname").val();
+		var password = $("#password").val();
+		var tel	 = $("#tel").val();
+		var remark   = $("#remark").val();
+		var thumbnail= $("#thumbnail").val();
+		var nickname      = $("#nickname").val();
+		var isenable   = $("#isenable option:selected").val();
+		var level   =  $("#level").val();
+		var preg_name= /^[\u4E00-\u9FA5]{1,6}$/;  //姓名正则
+		var preg_tel = /^1[34578]\d{9}$/; //手机号
+        if(!preg_tel.test(tel)) {
+            alert('请输入有效的手机号码!');return;
+        }
+		// if (!preg_name.test(rname)) {
+		// 	alert('请输入有效姓名!');return;
+		// }  		  	
+	  	// if (password.length <6) {
+	  	// 	alert('密码不符合要求');
+	  	// }	
+	  	$.ajax({
+	  		type     : "POST",
+	  		url      : "{:U('/Admin/User/saveUser')}",
+	  		data     : {"userid":userid,"tel":tel},
+	  		dataType : "json",
+	  		error		 : function(){},
+	  		success  : function(data){
+	    			// console.log(data);
+	    			if(data.status){
+	    				$(window.parent.document).find("#main_iframe").attr("src",data.url);
+	    			}else{
+	    				alert(data.info);
+	    			}      				
+	  		}
+	  	});
+	}
+	//时间戳转换为日期格式
+	function time(nS){
+		 // return new Date(parseInt(nS) * 1000).toLocaleString().replace(/:\d{1,2}$/,' '); 
+		 // return new Date(parseInt(nS) * 1000).toLocaleString().substr(0,17);
+	}
+	function formatIs(is) {
+		switch(parseInt(is)){
+			case 0:
+			  return "<a class='btn btn-success'>正常</a>";
+			  break;
+			case 1:
+			  return "<a class='btn btn-info'>冻结</a>";
+			  break;
+		}
+	}
+	$(document).ready(function($) {	
+		$("#jqGrid").jqGrid({
+			styleUI : 'Bootstrap',
+			colModel: [
+				// { label: 'UID', name: 'id',width:'50'},
+				{ label: '推荐人昵称', name: 'tname',width:'100'},
+				{ label: '推荐人手机号', name: 'tphone',width:'100'},
+			    { label: '会员昵称', name: 'nickname',width:'100'},
+			    { label: '注册时间', name: 'createtime',width:'125'},
+			    { label: '账户余额', name: 'money',width:'80'},
+			    { label: '累计提现', name: 'bnm',width:'80' },
+			    { label: '总下级', name: 'person',width:'50'},
+			    { label: '总订单', name: 'ordernum',width:'50'},
+			    { label: '出局订单', name: 'orderchu',width:'60'},
+			    { label: '在线订单', name: 'orderzai',width:'60'},
+			    { label: '状态', name: 'status',width:'60',formatter:formatIs},
+			    { label: '编辑', name: 'id',width:220,formatter: formatLink}
+			],
+			viewrecords: true,
+			rownumbers: true,
+			rownumWidth: 35,
+			height: document.documentElement.clientHeight-135,
+			autowidth:true,
+			rowNum: 13,
+			datatype: 'local',
+			loadonce:true,
+			pager: "#jqGridPager"
+		});
+		$("#jqGrid").jqGrid('setGridParam', { data: eval({$data})});
+		$("#jqGrid").trigger('reloadGrid');
+	});
+</script>
+<script>
+	//模糊查询会员
+	function searchState(){
+		var tphone = $("#tphone").val();
+		var tname = $("#tname").val();
+		var name = $("#name").val();
+		var insta = $("#insta").val();
+		var inend = $("#inend").val();
+		if (insta.length <0 || inend.length <0) {
+			alert('请选择时间');return;
+		};
+		$.ajax({
+			url:"{:U('/Admin/User/searchUser')}",
+			type:'GET',
+			data:{'start':insta,'end':inend,'tphone':tphone,'tname':tname,'name':name},
+			dataType:'json',
+			success:function(returndata){
+				$("#jqGrid").clearGridData();
+	       		$("#jqGrid").jqGrid('setGridParam', { data: returndata});
+	       		$("#jqGrid").trigger('reloadGrid');
+			}
+		});
+	}
+</script>

@@ -1,0 +1,221 @@
+<include file="Public/head" />
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;color:red;	}
+	.layui-layer-phimg img{
+		/*width:1000px !important;*/
+	}
+	#layui-layer2{
+		width:600px !important;
+		height:auto !important;
+	}
+	.jqgrow td:nth-child(5){
+		color : green;
+	}
+</style>
+<div>
+	<div style="margin:24px;">
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入会员手机号过滤查询" id="phone" />
+		<select class="form-control" style="width:25%;height:36px;display:inline;border-radius:2px;" id="change">
+			<option value="0">请选择收款方式</option>
+			<option value="1">微信</option>
+			<option value="2">支付宝</option>
+			<option value="3">银行卡</option>
+		</select>
+		<label>&nbsp;提现日期 :</label>
+		<input style="height:36px;" type="date" size="24px" placeholder="输入支付时间查询" id="insta" />至
+		<input style="height:36px;" type="date" size="24px" placeholder="输入支付时间查询" id="inend" />
+		<button id="submit_search" class="btn btn-primary" onclick="search();">查询</button>
+	</div>
+	<div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+			<table id="jqGrid" style="width: 100%;"></table>
+			<div id="jqGridPager"></div> 	
+	    </div>
+    	<div role="tabpanel" class="tab-pane" id="edituser">	
+		</div>
+	</div>
+<include file="Public/footer" />
+
+<script type="text/javascript">
+	function formatIs(is) {
+		switch(parseInt(is)){
+			case 0:
+			  return "<a class='btn btn-success'>已提交</a>";
+			  break;
+			case 1:
+			  return "<a class='btn btn-primary'>已处理</a>";
+			  break;
+			case 2:
+			  return "<a class='btn btn-danger'>驳回</a>";
+			  break;
+			case 3:
+			  return "<a class='btn btn-primary'>已处理</a>";
+			  break;
+		}
+	}
+	function ment(as) {
+		switch(parseInt(as)){
+			case 1:
+			  return "微信";
+			  break;
+			case 2:
+			  return "支付宝";
+			  break;
+			case 3:
+			  return "银行卡";
+			  break;
+		}
+	}
+
+	function fTime(createtime){
+		var timestamp3 = createtime;  
+		var newDate = new Date();
+		newDate.setTime(timestamp3 * 1000);
+		return newDate.toLocaleString();
+	}
+	function formatterImg(photo){
+		if(photo != ''){
+			return '<img src='+photo+' style="width:100px;height:70px;" onclick="script:imgs('+'\''+photo+'\''+')">';
+		}else{
+			return '无';
+		}
+	}
+	function tong(id){
+		$.ajax({
+			url: "{:U('Admin/Withdrawals/getinfo')}",
+			dataType: "json",
+			async: false,
+			data: { "id": id},
+			type: "GET",   
+			success: function(req) {
+				$("#userid").val(id);
+				$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Withdrawals/index')}");
+			}
+	    });
+	}
+	//驳回
+	function bo(id){
+		if (confirm("你确定要驳回此用户吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Withdrawals/BoUser')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",  
+				success: function(user) {
+					if (user=="true") {
+						alert('操作成功!');
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Withdrawals/index')}");
+					}else{
+						alert('操作失败!');
+					}
+				}  
+			});
+		}
+	}
+	function formatLink(id) {
+		return "<a class='btn btn-primary' href='javascript:' onclick='tong("+id+");'>同意</a>&nbsp;<a class='btn btn-danger' href='javascript:' onclick='bo("+id+");'>驳回</a>&nbsp<a class='btn btn-warning' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+	};
+	function deleteUser(id){
+		if (confirm("你确定要删除吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Withdrawals/deleteUser')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",   
+				success: function(req) {
+					if(req == "true"){	
+						alert('删除成功!');
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Withdrawals/index')}");
+					}else{
+						alert('用户删除失败!');
+					}
+				}
+		    });			
+		}
+	}
+	// function color(){
+	// 	return "style='color:green;'";
+	// }
+	$(document).ready(function($) {
+		$("#jqGrid").jqGrid({
+			styleUI : 'Bootstrap',
+			colModel: [
+			    // { label: '会员ID', name: 'uid',width:'60'},
+			    { label: '会员手机号', name: 'phone',width:'110'},
+			    { label: '金额', name: 'money',width:'60'},
+			    { label: '手续费', name: 'fee',width:'80' },
+			    { label: '实际到账金额', name: 'realmoney',width:'80'},
+			    { label: '收款方式', name: 'payment',width:'100',formatter: ment},
+			    { label: '收款账号', name: 'account',width:'80'},
+			    { label: '银行账号', name: 'card',width:'80'},
+			    { label: '开户行', name: 'bank',width:'80'},
+			    { label: '开户人', name: 'name',width:'80'},
+			    { label: '申请时间', name: 'createtime',width:'115'},
+			    { label: '收款码', name: 'photo',width:'140',formatter: formatterImg},
+			    { label: '状态', name: 'status',width:'70',formatter: formatIs}, 
+			    { label: '编辑', name: 'id',width:150,formatter: formatLink}  		   
+			],
+			viewrecords: true,
+			rownumbers: true,
+			rownumWidth: 35,
+			height: document.documentElement.clientHeight-135,
+			autowidth:true,
+			rowNum: 9,
+			datatype: 'local',
+			loadonce:true,
+			pager: "#jqGridPager"
+		});
+		$("#jqGrid").jqGrid('setGridParam', { data: eval({$data})});
+		$("#jqGrid").trigger('reloadGrid');
+	});
+</script>
+<script>
+	//模糊查询佣金
+	function search(){
+		var phone = $("#phone").val();
+		var change = $("#change").val();
+		var insta = $("#insta").val();
+		var inend = $("#inend").val();
+		$.ajax({
+			url:"{:U('/Admin/Withdrawals/searchWith')}",
+			type:'GET',
+			data:{'phone':phone,'start':insta,'end':inend,'change':change},
+			dataType:'json',
+			success:function(returndata){
+				$("#jqGrid").clearGridData();
+	       		$("#jqGrid").jqGrid('setGridParam', { data: returndata});
+	       		$("#jqGrid").trigger('reloadGrid');
+			}
+		});
+	}
+</script>
+
+<script>
+	layui.use('layer',function(){
+		layer = layui.layer;
+	})
+
+	function imgs(img){
+		var imgs = {
+		  "title": "", //相册标题
+		  "id": 123, //相册id
+		  "start": 0, //初始显示的图片序号，默认0
+		  "data": [   //相册包含的图片，数组格式
+		    {
+		      "alt": "图片名",
+		      "pid": 666, //图片id
+		      "src": img, //原图地址
+		      "thumb": img //缩略图地址
+		    }
+		  ]
+		}
+		layer.photos({
+		  photos: imgs
+		});
+		$('.layui-layer-phimg')
+	}
+	// layer.msg(123);
+</script>

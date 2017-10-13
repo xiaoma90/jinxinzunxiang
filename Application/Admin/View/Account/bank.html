@@ -1,0 +1,200 @@
+<include file="Public/head" />
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;	}
+	.wy_imga{
+		cursor: pointer;
+	}
+	.bigimgbg{
+		display: none;
+		position: fixed;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(0,0,0,0.4);
+		z-index: 9999;
+	}
+	#bigimg{
+		width: 800px;
+		height: 750px;
+		position: fixed;
+		top:100px;
+		left: 200px;
+		z-index: 99999;
+	}
+</style>
+<div class="bigimgbg">
+	<img id="bigimg" src="">
+</div>
+<div>
+	<div style="margin:24px;">
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入会员手机号过滤查询" id="phone" />
+		<input style="height:36px;" type="text" size="21px" placeholder="请输入会员昵称过滤查询" id="name" />
+		<label>&nbsp;变更日期 :</label>
+		<input style="height:36px;" type="date" size="24px" placeholder="输入支付时间查询" id="insta" />至
+		<input style="height:36px;" type="date" size="24px" placeholder="输入支付时间查询" id="inend" />
+		<button id="submit_search" class="btn btn-primary" onclick="searchState();">查询</button>			
+	</div>
+	<div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+			<table id="jqGrid" style="width: 100%;"></table>
+			<div id="jqGridPager"></div> 	
+	    </div>
+    	<div role="tabpanel" class="tab-pane" id="edituser">	
+		</div>
+	</div>
+<include file="Public/footer" />
+<script type="text/javascript">
+	function type(as){
+		switch(parseInt(as)){
+			case 1:
+				return "余额支付";
+				break;
+			case 2:
+				return "微信支付";
+				break;
+			case 3:
+				return "支付宝支付";
+				break;
+			case 4:
+				return "银行卡支付";
+				break;
+		}
+	}
+	function formatIs(is) {
+		switch(parseInt(is)){
+			
+			case 1:
+			  return "<a class='btn btn-info'>未支付</a>";
+			  break;
+			case 2:
+			  return "<a class='btn  btn-success'>已支付</a>";
+			  break;
+			case 3:
+			  return "<a class='btn btn-primary'>已同意</a>";
+			  break;
+			case 4:
+			  return "<a class='btn btn-danger'>驳回</a>";
+			  break;
+		}
+	}
+	function formatLink(id) {
+		return "<a class='btn btn-danger' href='javascript:' onclick='tong("+id+");'>同意</a>&nbsp<a class='btn btn-danger' href='javascript:' onclick='bo("+id+");'>驳回</a>&nbsp<a class='btn btn-warning' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+	};
+	function tong(id){
+		$.ajax({
+			url: "{:U('Admin/Account/banktong')}",
+			dataType: "text",
+			async: false,
+			data: { "id": id},
+			type: "GET",   
+			success: function(req) {
+				if (req=="true") {
+					alert('操作成功!');
+					$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Account/bank')}");
+				}else{
+					alert('操作失败!');
+				}
+			}
+	    });
+	}
+	//驳回
+	function bo(id){
+		if (confirm("你确定要驳回此用户吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Account/bankbo')}",
+				dataType: "text",
+				async: false,
+				data: { "id": id},
+				type: "GET",  
+				success: function(user) {
+					if (user=="true") {
+						alert('操作成功!');
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Account/bank')}");
+					}else{
+						alert('操作失败!');
+					}
+				}  
+			});
+		}
+	}
+	function deleteUser(id){
+		if (confirm("你确定要删除吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Account/deletebank')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",   
+				success: function(req) {
+					if(req == "true"){	
+						alert('删除成功!');
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Account/bank')}");
+					}else{
+						alert('用户删除失败!');
+					}
+				}
+		    });			
+		}
+	}
+
+	function formatterImg(thumbnail,option,object){
+		var id = object.id;
+        return '<img class="wy_imga" onclick="bigclick('+id+",'"+thumbnail+'\')" src='+thumbnail+' style="width:120px;height:60px;">';
+    }
+    function bigclick(id,thumbnail){
+    	// alert(id);
+    	console.log(thumbnail);
+    	$("#bigimg").attr("src",thumbnail);
+    	$(".bigimgbg").css("display","block");
+    	$(".bigimgbg").on("click",function(){
+    		$(".bigimgbg").css("display","none")
+    	})
+    }
+	$(document).ready(function($) {	
+		$("#jqGrid").jqGrid({
+			styleUI : 'Bootstrap',
+			colModel: [
+			    { label: '会员昵称', name: 'nickname',width:'80'},
+			    { label: '会员手机号', name: 'phone',width:'110'},
+			    { label: '支付日期', name: 'createtime',width:'120'},
+			    { label: '支付金额', name: 'money',width:'80' },
+			    { label: '交易凭证', name: 'transaction_number',width:'200',formatter: formatterImg},
+			    { label: '支付方式', name: 'payment',width:'100' ,formatter: type},
+			    { label: '状态', name: 'status',width:'100',formatter: formatIs}, 
+			    { label: '编辑', name: 'id',width:200,formatter: formatLink}
+			    
+			],
+			viewrecords: true,
+			rownumbers: true,
+			rownumWidth: 35,
+			height: document.documentElement.clientHeight-135,
+			autowidth:true,
+			rowNum: 9,
+			datatype: 'local',
+			loadonce:true,
+			pager: "#jqGridPager"
+		});
+		$("#jqGrid").jqGrid('setGridParam', { data: eval({$data})});
+		$("#jqGrid").trigger('reloadGrid');
+	});
+</script>
+<script>
+	//模糊查询佣金
+	function searchState(){
+		var phone = $("#phone").val();
+		var name = $("#name").val();
+		var insta = $("#insta").val();
+		var inend = $("#inend").val();
+		$.ajax({
+			url:"{:U('/Admin/Account/searchBank')}",
+			type:'GET',
+			data:{'phone':phone,'start':insta,'end':inend,'name':name},
+			dataType:'json',
+			success:function(returndata){
+				$("#jqGrid").clearGridData();
+	       		$("#jqGrid").jqGrid('setGridParam', { data: returndata});
+	       		$("#jqGrid").trigger('reloadGrid');
+			}
+		});
+	}
+</script>

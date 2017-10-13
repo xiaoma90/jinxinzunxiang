@@ -1,0 +1,149 @@
+<include file="Public/head" />
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:24%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;	}
+	span{font-size: 2rem;}
+	button{margin-left:36%;margin-top:2%;width:20%;height:3rem;}
+</style>
+<div>
+	<div class="tab-content">
+		<form action="" method="post" class="form-horizontal"  enctype="multipart/form-data">
+
+			<div class="box-body">
+				<span>会员各级别分佣比例设置</span>
+				<!-- <hr/> -->
+				<table class="table table-bordered table-hover table-condensed">
+					<tr>
+						<th rowspan="1" style="width: 120px">等级</th>
+						<th rowspan="1" style="width: 120px">一级(%)</th>
+						<th rowspan="1" style="width: 120px">二级(%)</th>
+						<th rowspan="1" style="width: 120px">三级(%)</th>
+						<th rowspan="1" style="width: 120px">四级(%)</th>
+						<th rowspan="1" style="width: 120px">五级(%)</th>
+					</tr>										
+					<tr>
+						<td style="line-height:3rem;">数据</td>
+						<td><input type="text" class="form-control" name="one" placeholder="" id="one" value="{$b['0']}"></td>
+						<td><input type="text" class="form-control" name="two" placeholder="" id="two" value="{$c['0']}"></td>
+						<td><input type="text" class="form-control" name="three" placeholder="" id="three" value="{$d['0']}"></td>
+						<td><input type="text" class="form-control" name="four" placeholder="" id="four" value="{$e['0']}"></td>
+						<td><input type="text" class="form-control" name="five" placeholder="" id="five" value="{$f['0']}"></td>
+					</tr>
+				</table>
+				<button type="button" class="btn btn-primary" onclick="save();">修改</button>
+			</div>
+
+			<div class="box-body">
+				<span>提现设置</span>
+				<!-- <hr/> -->
+				<table class="table table-bordered table-hover table-condensed">
+					<tr>
+						<th rowspan="1" style="width: 120px">提现设置</th>
+						<th rowspan="1" style="width: 120px">提现手续费(%)</th>
+						<th rowspan="1" style="width: 120px">最低发起提现额度(元)</th>
+						<th rowspan="1" style="width: 120px">提现发放周期(天)</th>
+					</tr>										
+					<tr>
+						<td style="line-height:3rem;">数据</td>
+						<td><input type="text" class="form-control" name="cash" placeholder="" id="cash" value="{$t['0']}"></td>
+						<td><input type="text" class="form-control" name="lower" placeholder="" id="lower" value="{$n['0']}"></td>
+						<td><input type="text" class="form-control" name="cycle" placeholder="" id="cycle" value="{$m['0']}"></td>
+					</tr>
+				</table>
+				<button type="button" class="btn btn-primary" onclick="saveWithdrawals();">修改</button>
+			</div>
+			
+			<div class="box-body">
+				<span>理财产品设置</span>
+				<!-- <hr/> -->
+				<table class="table table-bordered table-hover table-condensed">
+					<tr>
+						<th rowspan="1" style="width: 120px">数据</th>
+						<th rowspan="1" style="width: 120px">单价(元)</th>
+						<th rowspan="1" style="width: 120px">每人每日限购(单)</th>
+					</tr>										
+					<tr>
+						<td style="line-height:3rem;">数据</td>
+						<td><input type="text" class="form-control" name="unit_price" placeholder="" id="unit_price" value="{$p['0']}"></td>
+						<td><input type="text" class="form-control" name="person_day" placeholder="" id="person_day" value="{$l['0']}"></td>
+					</tr>
+				</table>
+				<button type="button" class="btn btn-primary" onclick="price();">修改</button>
+			</div>
+		</form>
+	</div>
+</div>
+<include file="Public/footer" />
+<script>
+	//会员各级别分佣比例设置
+	function save(){
+		var one  	= $("#one").val();
+		var two  	= $("#two").val();
+		var three  	= $("#three").val();
+		var four  	= $("#four").val();
+		var five  	= $("#five").val();
+		$.ajax({
+	  		type     : "POST",
+	  		url      : "{:U('/Admin/Config/save')}",
+	  		data     : {"id":1,"one":one,"two":two,"three":three,"four":four,"five":five},
+	  		dataType : "json",
+	  		error	 : function(){},
+	  		success  : function(data){
+	    			console.log(data);
+	    			if(data.status == 1){
+	    				alert("更新成功！");
+	    				$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Config/index')}");	
+	    			}else{
+	    				alert("更新失败！");	
+	    			}      				
+	  		}
+	  	});
+	}
+</script>
+<script type="text/javascript">	
+	// 提现设置
+	function saveWithdrawals(){
+		var cash  	= $("#cash").val();
+		var lower  	= $("#lower").val();
+		var cycle  	= $("#cycle").val();
+		$.ajax({
+	  		type     : "POST",
+	  		url      : "{:U('/Admin/Config/Withdrawals')}",
+	  		data     : {"cash":cash,"lower":lower,"cycle":cycle},
+	  		dataType : "json",
+	  		error	 : function(){},
+	  		success  : function(data){
+	    			console.log(data);
+	    			if(data.status == 1){
+	    				alert("更新成功！");
+	    				$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Config/index')}");	
+	    			}else{
+	    				alert("更新失败！");	
+	    			}      				
+	  		}
+	  	});
+	}
+</script>
+<script type="text/javascript">	
+	// 理财产品设置
+	function price(){
+		var unit_price  	= $("#unit_price").val();
+		var person_day  	= $("#person_day").val();
+		$.ajax({
+	  		type     : "POST",
+	  		url      : "{:U('/Admin/Config/price')}",
+	  		data     : {"unit_price":unit_price,"person_day":person_day},
+	  		dataType : "json",
+	  		error	 : function(){},
+	  		success  : function(data){
+	    			console.log(data);
+	    			if(data.status == 1){
+	    				alert("更新成功！");
+	    				$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Config/index')}");	
+	    			}else{
+	    				alert("更新失败！");	
+	    			}      				
+	  		}
+	  	});
+	}
+</script>

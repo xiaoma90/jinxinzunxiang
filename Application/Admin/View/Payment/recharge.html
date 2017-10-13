@@ -1,0 +1,168 @@
+<include file="Public/head" />
+<style type="text/css">
+    table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+    table tr > td:last-child input{width:80%;margin-bottom:10px;    }
+    .wy_imga{
+        cursor: pointer;
+    }
+    .bigimgbg{
+        display: none;
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.4);
+        z-index: 9999;
+    }
+    #bigimg{
+        width: 800px;
+        height: 750px;
+        position: fixed;
+        top:100px;
+        left: 200px;
+        z-index: 99999;
+    }
+</style>
+<div class="bigimgbg">
+    <img id="bigimg" src="">
+</div>
+
+<div>
+    <!-- <div style="margin:24px;">
+        <a href="{:U('/Admin/Payment/addrecharge')}" style="margin-left:10px;width:100px;" type="button" class="btn btn-primary">余额充值</a>
+    </div> -->
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+            <table id="jqGrid" style="width: 100%;"></table>
+            <div id="jqGridPager"></div>    
+        </div>
+        <div role="tabpanel" class="tab-pane" id="edituser">    
+        </div>
+    </div>
+<include file="Public/footer" />
+<script id="container" name="content" type="text/plain" style="min-height: 400px;">
+</script>
+<script type="text/javascript">
+    //时间戳转换为日期格式
+    function time(nS){
+         return new Date(parseInt(nS) * 1000).toLocaleString().replace(/:\d{1,2}$/,' '); 
+    }
+    function formatIs(is) {
+        switch(parseInt(is)){
+            case 0:
+              return "<a class='btn btn-success'>已申请</a>";
+              break;
+            case 1:
+              return "<a class='btn btn-primary'>同意</a>";
+              break;
+            case 2:
+              return "<a class='btn btn-danger'>驳回</a>";
+              break;
+        }
+    }
+    function formatLink(id) {
+        var url = "{:U('Admin/Payment/payinfo')}"+"?id="+id;
+        return "<a href='"+url+"' class='btn btn-primary' >同意充值</a>&nbsp<a class='btn btn-danger' href='javascript:' onclick='bo("+id+");'>驳回</a>&nbsp<a class='btn btn-warning' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+    };
+    // function tong(id){
+    //     if (confirm("你确定要同意此用户吗?")) {
+    //         $.ajax({
+    //             url: "{:U('Admin/Payment/payinfo')}",
+    //             dataType: "text",
+    //             async: false,
+    //             data: { "id": id},
+    //             type: "GET",   
+    //             success: function(req) {
+    //                 if (req=="true") {
+    //                     alert('操作成功!');
+    //                     $(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Payment/recharge')}");
+    //                 }else{
+    //                     alert('操作失败!');
+    //                 }
+    //             }
+    //         });
+    //     }
+    // }
+    //驳回
+    function bo(id){
+        if (confirm("你确定要驳回此用户吗?")) {
+            $.ajax({
+                url: "{:U('/Admin/Payment/paybo')}",
+                dataType: "text",
+                async: false,
+                data: { "id": id},
+                type: "GET",  
+                success: function(user) {
+                    if (user=="true") {
+                        alert('操作成功!');
+                        $(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Payment/recharge')}");
+                    }else{
+                        alert('操作失败!');
+                    }
+                }  
+            });
+        }
+    }
+    function deleteUser(id){
+        if (confirm("你确定要删除吗?")) {
+            $.ajax({
+                url: "{:U('/Admin/Payment/deleteRe')}",
+                dataType: "text",
+                async: true,
+                data: { "id": id},
+                type: "GET",   
+                success: function(req) {
+                    if(req == "true"){  
+                        alert('删除成功!');
+                        $(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Payment/recharge')}");
+                    }else{
+                        alert('删除失败!');
+                    }
+                }
+            });         
+        }
+    }
+    function formatterImg(thumbnail,option,object){
+        var id = object.id;
+        return '<img class="wy_imga" onclick="bigclick('+id+",'"+thumbnail+'\')" src='+thumbnail+' style="width:100px;height:60px;">';
+    }
+
+    function bigclick(id,thumbnail){
+        // alert(id);
+        console.log(thumbnail);
+        $("#bigimg").attr("src",thumbnail);
+        $(".bigimgbg").css("display","block");
+        $(".bigimgbg").on("click",function(){
+            $(".bigimgbg").css("display","none")
+        })
+    }
+    $(document).ready(function($) { 
+        $("#jqGrid").jqGrid({
+            styleUI : 'Bootstrap',
+            colModel: [
+                { label: '用户ID', name: 'uid',width:'60'},
+                { label: '用户姓名', name: 'rname',width:'90'},
+                { label: '用户昵称', name: 'nickname',width:'100'},
+                { label: '用户手机号', name: 'phone',width:'110'},
+                { label: '交易凭证', name: 'transaction_number',width:'150',formatter: formatterImg},
+                { label: '充值金额', name: 'money',width:'100'},
+                { label: '支付方式', name: 'paymenttype',width:'80'},
+                // { label: '二维码图片', name: 'imgqrcode',width:'150',formatter: formatterImg},
+                { label: '申请时间', name: 'createtime',width:'115',formatter: time },
+                { label: '同意时间', name: 'agreetime',width:'110',formatter: time },
+                { label: '状态', name: 'status',width:'70',formatter: formatIs}, 
+                { label: '编辑', name: 'id',width:180,formatter: formatLink}
+            ],
+            viewrecords: true,
+            rownumbers: true,
+            rownumWidth: 35,
+            height: document.documentElement.clientHeight-135,
+            autowidth:true,
+            rowNum: 13,
+            datatype: 'local',
+            loadonce:true,
+            pager: "#jqGridPager"
+        });
+        $("#jqGrid").jqGrid('setGridParam', { data: eval({$data})});
+        $("#jqGrid").trigger('reloadGrid');
+    });
+</script>

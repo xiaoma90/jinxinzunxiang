@@ -1,0 +1,119 @@
+<include file="Public/head" />
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;	}
+</style>
+<div> <input type="hidden" name="class" id="class" value="{$class}">
+	<div style="margin:24px;">
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入订单号过滤查询" id="order" />
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入收货人手机号过滤查询" id="phone" />
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入收货人过滤查询" id="name" />
+		<label>&nbsp;变更日期 :</label>
+		<input style="height:36px;" type="date" size="24px" placeholder="输入支付时间查询" id="insta" />至
+		<input style="height:36px;" type="date" size="24px" placeholder="输入支付时间查询" id="inend" />
+		<button id="submit_search" class="btn btn-primary" onclick="searchState();">查询</button>
+	</div>
+	<div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+			<table id="jqGrid" style="width: 100%;"></table>
+			<div id="jqGridPager"></div> 	
+	    </div>
+    	<div role="tabpanel" class="tab-pane" id="edituser">	
+		</div>
+	</div>
+<include file="Public/footer" />
+<script type="text/javascript">
+	function formatLink(id) {
+		return "&nbsp;<a class='btn btn-danger' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+	};
+	function formatIs(is) {
+		switch(parseInt(is)){
+			case 1:
+			  return "在线";
+			  break;
+			case 2:
+			  return "出局";
+			  break;
+		}
+	}
+	function fplay(as){
+		switch(parseInt(as)){
+			case 2:
+			  return "已支付";
+			  break;
+			case 3:
+			  return "同意";
+			  break;
+			case 4:
+			  return "驳回";
+			  break;
+		}
+	}
+	function deleteUser(id){
+		if (confirm("你确定要删除吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Order/deleteing')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",   
+				success: function(req) {
+					if(req=="true")
+					{
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Order/ordering')}");
+					}else{
+						alert('用户删除失败!');
+					}
+				}
+		    });			
+		}
+	}
+	$(document).ready(function($) {	
+		$("#jqGrid").jqGrid({
+			styleUI : 'Bootstrap',
+			colModel: [
+			    { label: '订单编号', name: 'order_num',width:'120'},
+			    { label: '收货人', name: 'getname',width:'100'},
+			    { label: '收货人手机号', name: 'getphone',width:'120'},
+			    { label: '数量', name: 'num',width:'60' },
+			    { label: '金额', name: 'money',width:'100' },
+			    { label: '订单状态', name: 'status',width:'80',formatter: fplay },
+			    { label: '购买日期', name: 'createtime',width:'130'},
+			    { label: '在线/出局', name: 'type',width:'80',formatter: formatIs},	
+			    { label: '操作', name: 'id',width:'80',formatter: formatLink},	   
+			],
+			viewrecords: true,
+			rownumbers: true,
+			rownumWidth: 35,
+			height: document.documentElement.clientHeight-135,
+			autowidth:true,
+			rowNum: 13,
+			datatype: 'local',
+			loadonce:true,
+			pager: "#jqGridPager"
+		});
+		$("#jqGrid").jqGrid('setGridParam', { data: eval({$orders})});
+		$("#jqGrid").trigger('reloadGrid');
+	});
+</script>
+<script>
+	//模糊查询佣金
+	function searchState(){
+		var phone = $("#phone").val();
+		var name = $("#name").val();
+		var order = $("#order").val();
+		var insta = $("#insta").val();
+		var inend = $("#inend").val();
+		$.ajax({
+			url:"{:U('/Admin/Order/searchIng')}",
+			type:'GET',
+			data:{'phone':phone,'start':insta,'end':inend,'name':name,'order':order},
+			dataType:'json',
+			success:function(returndata){
+				$("#jqGrid").clearGridData();
+	       		$("#jqGrid").jqGrid('setGridParam', { data: returndata});
+	       		$("#jqGrid").trigger('reloadGrid');
+			}
+		});
+	}
+</script>

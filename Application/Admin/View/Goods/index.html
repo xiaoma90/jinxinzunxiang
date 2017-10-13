@@ -1,0 +1,103 @@
+<include file="Public/head" />
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;	}
+</style>
+<div>
+	<!-- <form action="" method="get" class="form-horizontal" role="form" id="form1"> -->
+		<div style="margin:24px;">
+			<input style="height:36px;" type="text" size="24px" id="search" name="search" placeholder="请输入商品标题进行过滤查询"/>
+			<input style="height:36px;" type="text" size="24px" id="author" name="author" placeholder="请输入发布人进行过滤查询"/>
+			<label>&nbsp;发表时间 :</label>
+			<input style="height:36px;" type="date" size="24px" id="insta" />至
+			<input style="height:36px;" type="date" size="24px" id="inend" />
+			<button style="margin-left:10px;width:100px;" class="btn btn-primary" onclick="searchState();">查询商品</button>
+			<a href="{:U('/Admin/Goods/add')}" style="margin-left:10px;width:100px;" type="button" class="btn btn-primary">添加商品</a>
+		</div>
+	<!-- </form> -->
+	<div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+			<table id="jqGrid" style="width: 100%;"></table>
+			<div id="jqGridPager"></div> 	
+	    </div>
+    	<div role="tabpanel" class="tab-pane" id="edituser">	
+		</div>
+	</div>
+<include file="Public/footer" />
+<script id="container" name="content" type="text/plain" style="min-height: 400px;">
+</script>
+<script src="__PUBLIC__/ueditor/ueditor.config.js"></script>
+<script src="__PUBLIC__/ueditor/ueditor.all.min.js"></script>
+<script type="text/javascript">
+	function formatLink(id) {
+		var url = "{:U('Admin/Goods/getinfo')}"+"?id="+id;
+		return "<a href='"+url+"' class='btn btn-primary' >编辑</a>&nbsp;<a class='btn btn-danger' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+	};
+	function formatterImg(thumbnail){
+		if(thumbnail != ''){
+			return "<img src="+thumbnail+" style='width:60px;height:50px;'>";
+		}
+	}
+	//模糊查询商品
+	function searchState(){
+		var search = $("#search").val();
+		var insta = $("#insta").val();
+		var inend = $("#inend").val();
+		var author = $("#author").val();
+		$.ajax({
+			url:"{:U('/Admin/Goods/searchState')}",
+			type:'GET',
+			data:{'name':search,'start':insta,'end':inend,'author':author},
+			dataType:'json',
+			success:function(returndata){
+				$("#jqGrid").clearGridData();
+	       		$("#jqGrid").jqGrid('setGridParam', { data: returndata});
+	       		$("#jqGrid").trigger('reloadGrid');
+			}
+		});
+	}
+	function deleteUser(id){
+		if (confirm("你确定要删除吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Goods/deleteUser')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",   
+				success: function(req) {
+					if(req=="true")
+					{
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Goods/index')}");
+					}else{
+						alert('商品删除失败!');
+					}
+				}
+		    });			
+		}
+	}
+	$(document).ready(function($) {	
+		$("#jqGrid").jqGrid({
+			styleUI : 'Bootstrap',
+			colModel: [
+			    { label: '商品标题', name: 'title',width:'80'},
+			    { label: '发布人', name: 'author',width:'100'},
+			    { label: '缩图', name: 'photo',width:'120',formatter: formatterImg},
+			    { label: '日期', name: 'createtime',width:'115'},
+			    { label: '描述', name: 'description',width:'120'},
+			    { label: '价格', name: 'price',width:'60'},
+			    { label: '操作', name: 'id',width:140,formatter: formatLink}
+			],
+			viewrecords: true,
+			rownumbers: true,
+			rownumWidth: 35,
+			height: document.documentElement.clientHeight-135,
+			autowidth:true,
+			rowNum: 9,
+			datatype: 'local',
+			loadonce:true,
+			pager: "#jqGridPager"
+		});
+		$("#jqGrid").jqGrid('setGridParam', { data: eval({$goods})});
+		$("#jqGrid").trigger('reloadGrid');
+	});
+</script>

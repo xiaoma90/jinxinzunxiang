@@ -1,0 +1,111 @@
+<include file="Public/head" />
+<style type="text/css">
+	table tr > td:first-child{padding-left:20px;padding-bottom:10px;width:40%;text-align:center;}
+	table tr > td:last-child input{width:80%;margin-bottom:10px;	}
+</style>
+<div>
+	<div style="margin:24px;">
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入订单号过滤查询" id="order" />
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入下单会员手机号过滤查询" id="phone" />
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入收货人手机号过滤查询" id="mobile" />
+		<input style="height:36px;" type="text" size="24px" placeholder="请输入收货人过滤查询" id="name" />
+		<button id="submit_search" class="btn btn-primary" onclick="search();">查询</button>
+	</div>
+	<div class="tab-content">
+	    <div role="tabpanel" class="tab-pane active" id="userlist" style="padding-right: 20px;">
+			<table id="jqGrid" style="width: 100%;"></table>
+			<div id="jqGridPager"></div> 	
+	    </div>
+    	<div role="tabpanel" class="tab-pane" id="edituser">	
+		</div>
+	</div>
+<include file="Public/footer" />
+<script type="text/javascript">
+	function formatLink(id) {
+		return "&nbsp;<a class='btn btn-danger' href='javascript:' onclick='deleteUser("+id+");'>删除</a>";
+	};
+	function formatIs(is) {
+		switch(parseInt(is)){
+			case 1:
+			  return "已发货";
+			  break;
+			case 2:
+			  return "未发货";
+			  break;
+		}
+	}
+	function deleteUser(id){
+		if (confirm("你确定要删除吗?")) {
+			$.ajax({
+				url: "{:U('/Admin/Deliver/deleteUser')}",
+				dataType: "text",
+				async: true,
+				data: { "id": id},
+				type: "GET",   
+				success: function(req) {
+					if(req=="true")
+					{
+						$(window.parent.document).find("#main_iframe").attr("src","{:U('/Admin/Deliver/index')}");
+					}else{
+						alert('用户删除失败!');
+					}
+				}
+		    });			
+		}
+	}
+	
+	function fTime(createtime){
+		var timestamp3 = createtime;  
+		var newDate = new Date();
+		newDate.setTime(timestamp3 * 1000);
+		return newDate.toLocaleString();
+	}
+	$(document).ready(function($) {	
+		$("#jqGrid").jqGrid({
+			styleUI : 'Bootstrap',
+			colModel: [
+			    { label: '订单编号', name: 'order_num',width:'120'},
+			    { label: '下单会员手机号', name: 'phone',width:'120'},
+			    { label: '收货人', name: 'receiver',width:'60' },
+			    { label: '收货地址', name: 'address',width:'100' },
+			    { label: '收货人电话', name: 'mobile',width:'80'},
+			    // { label: '发货时间', name: 'createtime',width:'130',formatter: fTime},
+			    { label: '发货状态', name: 'status',width:'80',formatter: formatIs},
+			     { label: '编辑', name: 'id',width:100,formatter: formatLink}		   
+			],
+			viewrecords: true,
+			rownumbers: true,
+			rownumWidth: 35,
+			height: document.documentElement.clientHeight-135,
+			autowidth:true,
+			rowNum: 9,
+			datatype: 'local',
+			loadonce:true,
+			pager: "#jqGridPager"
+		});
+		$("#jqGrid").jqGrid('setGridParam', { data: eval({$data})});
+		$("#jqGrid").trigger('reloadGrid');
+	});
+</script>
+<script>
+	//模糊查询佣金
+	function search(){
+		var phone = $("#phone").val();
+		var name = $("#name").val();
+		var order = $("#order").val();
+		var mobile = $("#mobile").val();
+		// var insta = $("#insta").val();
+		// var inend = $("#inend").val();
+		$.ajax({
+			url:"{:U('/Admin/Deliver/searchDeliver')}",
+			type:'GET',
+			data:{'phone':phone,'mobile':mobile,'name':name,'order':order},
+			dataType:'json',
+			success:function(returndata){
+				$("#jqGrid").clearGridData();
+	       		$("#jqGrid").jqGrid('setGridParam', { data: returndata});
+	       		$("#jqGrid").trigger('reloadGrid');
+			}
+		});
+	}
+</script>
